@@ -144,6 +144,8 @@
   <string name="memory_warning_title" translatable="true" description="Title of the warning dialog regarding high memory usage by a model. [CHAR_LIMIT=30]">Memory Warning</string>
   <string name="max_tokens_warning_message" translatable="true" description="Warning message displayed when the user sets a high max token limit, indicating potential app instability. [CHAR_LIMIT=111]">Setting max tokens above 10000 may cause app to be unstable.</string>
   <string name="model_is_initializing_msg" translatable="true" description="Status message showing that the machine learning model is currently loading or preparing. [CHAR_LIMIT=45]">Initializing model…</string>
+  <!-- Hint shown in the Imported models section when no models have been imported yet. -->
+  <string name="model_list_imported_models_empty_hint" translatable="true" description="Hint shown in the Imported models section of the model list when no models have been imported yet, suggesting the user import a local model file. [CHAR_LIMIT=46]">Import a local .litertlm model to use it here</string>
   <string name="model_list_imported_models_title" translatable="true" description="Section header in the model list for models that have been imported locally by the user. [CHAR_LIMIT=26]">Imported models</string>
   <plurals name="model_list_number_of_models_available" translatable="true">
     <item quantity="one">%d model available</item>
@@ -153,6 +155,8 @@
   <string name="model_manager" translatable="true" description="Title of the screen where users can manage (download, delete, import) models. [CHAR_LIMIT=22]">Model Manager</string>
   <string name="model_manager_select_task_title" translatable="true" description="Header instructing the user to choose a specific task or use case to try with the models. [CHAR_LIMIT=40]">Select a use case to try</string>
   <string name="model_not_downloaded_msg" translatable="true" description="Status message indicating a model must be downloaded before it can be used. [CHAR_LIMIT=45]">Model not downloaded yet</string>
+  <!-- Action row at the bottom of the model picker popup to open the model import flow. -->
+  <string name="model_picker_import_model" translatable="true" description="Label on the action row at the bottom of the model picker popup that opens the model import flow. [CHAR_LIMIT=20]">Import model…</string>
   <string name="name" translatable="true" description="General label for a name field (e.g., config setting name or custom skill name). [CHAR_LIMIT=18]">Name</string>
   <string name="no_cutouts_collected" translatable="true" description="Message shown when the user has not yet created or saved any image cutouts in the scrapbook feature. [CHAR_LIMIT=34]">No cutouts collected</string>
   <string name="notification_content_fail" translatable="true" description="Notification body text containing the model name when a model download fails. [CHAR_LIMIT=110]">Failed to download model "%s"</string>
@@ -498,6 +502,8 @@
   <string name="import_model_terms_subtitle" translatable="true" description="Subtitle in the import model bottom sheet reminding users to adhere to separate model terms. [CHAR_LIMIT=126]">You are responsible for adhering to any separate terms applicable to models.</string>
   <string name="cd_import_model_from_hugging_face" translatable="true" description="Content description spoken when the import model from hugging face button is focused. [CHAR_LIMIT=34]">Import model from Hugging Face</string>
   <string name="import_model_from_hugging_face" translatable="true" description="Text label on the button/option to import a model from Hugging Face. [CHAR_LIMIT=30]">From Hugging Face</string>
+  <!-- Button label that opens the model import flow. -->
+  <string name="import_model_button" translatable="true" description="Button label that opens the model import flow, e.g. the inline action in the empty Imported models section of the Model Manager. [CHAR_LIMIT=18]">Import model</string>
   <string name="import_from_hugging_face_title" translatable="true" description="Title of the dialog box for importing a model from Hugging Face. [CHAR_LIMIT=40]">Import from Hugging Face</string>
   <string name="enter_hugging_face_url" translatable="true" description="Prompt text to guide the user to enter a Hugging Face model card or model file URL. [CHAR_LIMIT=102]">"Enter a Hugging Face model card or file URL. For example: "</string>
   <string name="enter_hugging_face_url_example_link" translatable="false">https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm</string>

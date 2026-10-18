@@ -99,6 +99,7 @@ private const val ROUTE_MODEL = "route_model"
 private const val ROUTE_BENCHMARK = "benchmark"
 private const val ROUTE_MODEL_MANAGER = "model_manager"
 private const val ARG_IMPORT_URL = "import_url"
+private const val ARG_AUTO_OPEN_IMPORT = "auto_open_import"
 private const val ROUTE_NOTIFICATIONS = "notifications"
 private const val ENTER_ANIMATION_DURATION_MS = 500
 private val ENTER_ANIMATION_EASING = EaseOutExpo
@@ -185,6 +186,16 @@ fun GalleryNavHost(
     lifecycleOwner.lifecycle.addObserver(observer)
 
     onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+  }
+
+  // Open the Model Manager with its import sheet when the user taps an import entry point on
+  // another surface (e.g. "Import model…" at the bottom of the chat model picker).
+  val importModelRequested by modelManagerViewModel.importModelRequested.collectAsState()
+  LaunchedEffect(importModelRequested) {
+    if (importModelRequested) {
+      modelManagerViewModel.consumeImportModelRequest()
+      navController.navigate("$ROUTE_MODEL_MANAGER?$ARG_AUTO_OPEN_IMPORT=true")
+    }
   }
 
   NavHost(
@@ -365,14 +376,19 @@ fun GalleryNavHost(
 
     // Global model manager page.
     composable(
-      route = "$ROUTE_MODEL_MANAGER?$ARG_IMPORT_URL={$ARG_IMPORT_URL}",
+      route =
+        "$ROUTE_MODEL_MANAGER?$ARG_IMPORT_URL={$ARG_IMPORT_URL}&$ARG_AUTO_OPEN_IMPORT={$ARG_AUTO_OPEN_IMPORT}",
       arguments =
         listOf(
           navArgument(ARG_IMPORT_URL) {
             type = NavType.StringType
             nullable = true
             defaultValue = null
-          }
+          },
+          navArgument(ARG_AUTO_OPEN_IMPORT) {
+            type = NavType.BoolType
+            defaultValue = false
+          },
         ),
       enterTransition = {
         if (
@@ -396,10 +412,12 @@ fun GalleryNavHost(
       },
     ) { backStackEntry ->
       val importUrl = backStackEntry.arguments?.getString(ARG_IMPORT_URL)
+      val autoOpenImportSheet = backStackEntry.arguments?.getBoolean(ARG_AUTO_OPEN_IMPORT) ?: false
       GlobalModelManager(
         viewModel = modelManagerViewModel,
         tosViewModel = tosViewModel,
         initialImportUrl = importUrl,
+        autoOpenImportSheet = autoOpenImportSheet,
         navigateUp = {
           enableHomeScreenAnimation = false
           navController.navigateUp()

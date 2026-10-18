@@ -67,6 +67,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,6 +91,7 @@ import com.google.ai.edge.gallery.data.supportModelBenchmark
 import com.google.ai.edge.gallery.huggingface.extractHfUrlInfo
 import com.google.ai.edge.gallery.proto.HfModelItemProto
 import com.google.ai.edge.gallery.proto.ImportedModel
+import com.google.ai.edge.gallery.ui.common.SmallFilledTonalButton
 import com.google.ai.edge.gallery.ui.common.TaskIcon
 import com.google.ai.edge.gallery.ui.common.isHttpOrHttps
 import com.google.ai.edge.gallery.ui.common.modelitem.ModelItem
@@ -109,6 +111,7 @@ fun GlobalModelManager(
   modifier: Modifier = Modifier,
   tosViewModel: TosViewModel? = null,
   initialImportUrl: String? = null,
+  autoOpenImportSheet: Boolean = false,
 ) {
   val uiState by viewModel.uiState.collectAsState()
   val builtInModels = remember { mutableStateListOf<Model>() }
@@ -134,6 +137,19 @@ fun GlobalModelManager(
   val context = LocalContext.current
   val snackbarHostState = remember { SnackbarHostState() }
   val modelItemExpandedStates = remember { mutableStateMapOf<String, Boolean>() }
+
+  // Auto-open the import sheet when the screen was entered via an import entry point elsewhere
+  // (e.g. "Import model…" at the bottom of the chat model picker). The route argument stays true
+  // for the lifetime of the back stack entry, so guard with saveable state to only honor it once
+  // per entry — otherwise the sheet would re-open every time this screen is re-composed after the
+  // user dismissed it (e.g. returning from a model page or after a configuration change).
+  var autoOpenedImportSheet by rememberSaveable { mutableStateOf(false) }
+  LaunchedEffect(autoOpenImportSheet) {
+    if (autoOpenImportSheet && !autoOpenedImportSheet) {
+      autoOpenedImportSheet = true
+      showImportModelSheet = true
+    }
+  }
 
   val processModelUri: (Uri, Boolean) -> Unit = { uri, isWebImport ->
     validateAndProcessModelUri(
@@ -284,8 +300,16 @@ fun GlobalModelManager(
             }
           }
         },
-        // The "action" component at the right.
+        // The "action" components at the right.
         actions = {
+          // Prominent import action, mirroring the import FAB below.
+          IconButton(onClick = { showImportModelSheet = true }) {
+            Icon(
+              imageVector = Icons.Filled.Add,
+              contentDescription = stringResource(R.string.cd_import_model_button),
+              tint = MaterialTheme.colorScheme.onSurface,
+            )
+          }
           IconButton(onClick = { navigateUp() }) {
             Icon(
               imageVector = Icons.Rounded.Close,
@@ -347,17 +371,35 @@ fun GlobalModelManager(
             }
 
             // Imported models.
-            if (importedModels.isNotEmpty()) {
-              item(key = "imported_models_label") {
-                Text(
-                  stringResource(R.string.model_list_imported_models_title),
-                  color = MaterialTheme.colorScheme.onSurface,
-                  style = MaterialTheme.typography.labelLarge,
-                  modifier =
-                    Modifier.semantics { heading() }
-                      .padding(horizontal = 16.dp)
-                      .padding(top = 32.dp, bottom = 8.dp),
-                )
+            item(key = "imported_models_label") {
+              Text(
+                stringResource(R.string.model_list_imported_models_title),
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.labelLarge,
+                modifier =
+                  Modifier.semantics { heading() }
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 32.dp, bottom = 8.dp),
+              )
+            }
+            // Empty state: hint plus an inline action to open the import sheet.
+            if (importedModels.isEmpty()) {
+              item(key = "imported_models_empty_state") {
+                Column(
+                  modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                  verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                  Text(
+                    stringResource(R.string.model_list_imported_models_empty_hint),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                  )
+                  SmallFilledTonalButton(
+                    onClick = { showImportModelSheet = true },
+                    labelResId = R.string.import_model_button,
+                    imageVector = Icons.Filled.Add,
+                  )
+                }
               }
             }
             items(importedModels, key = { it.name }) { model ->

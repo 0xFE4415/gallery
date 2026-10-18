@@ -156,6 +156,11 @@ fun ModelPickerChip(
           val prevSelectedModel = modelManagerUiState.selectedModel
           onModelSelected(prevSelectedModel, selectedModel)
         },
+        onImportModelClicked = {
+          showModelPicker = false
+          // The nav graph picks this up and opens the Model Manager with the import sheet.
+          modelManagerViewModel.requestImportModel()
+        },
       )
     }
   }

@@ -317,6 +317,22 @@ constructor(
     MutableStateFlow(createEmptyUiState())
   open val uiState: StateFlow<ModelManagerUiState> = _uiState.asStateFlow()
 
+  // One-shot flag set when the user taps an import entry point outside the Model Manager (e.g.
+  // "Import model…" at the bottom of the chat model picker). The nav graph consumes it to navigate
+  // to the Model Manager with the import sheet open.
+  private val _importModelRequested = MutableStateFlow(false)
+  val importModelRequested: StateFlow<Boolean> = _importModelRequested.asStateFlow()
+
+  /** Requests navigating to the Model Manager with the import model sheet open. */
+  fun requestImportModel() {
+    _importModelRequested.value = true
+  }
+
+  /** Clears the pending import request; called by the nav graph after handling it. */
+  fun consumeImportModelRequest() {
+    _importModelRequested.value = false
+  }
+
   open fun fetchModelDetails(modelId: String, onResult: (HfModelItemProto?) -> Unit) {
     viewModelScope.launch {
       try {

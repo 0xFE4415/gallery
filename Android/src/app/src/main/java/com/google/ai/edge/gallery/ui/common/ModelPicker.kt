@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -63,6 +64,7 @@ fun ModelPicker(
   task: Task,
   modelManagerViewModel: ModelManagerViewModel,
   onModelSelected: (Model) -> Unit,
+  onImportModelClicked: () -> Unit,
 ) {
   val modelManagerUiState by modelManagerViewModel.uiState.collectAsState()
   var showMemoryWarning by remember { mutableStateOf(false) }
@@ -148,6 +150,28 @@ fun ModelPicker(
           )
         }
       }
+    }
+
+    // Import model action, visually distinct from the model rows above via the leading add icon.
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(12.dp),
+      modifier =
+        Modifier.fillMaxWidth()
+          .clickable(onClick = onImportModelClicked)
+          .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+      Icon(
+        Icons.Filled.Add,
+        modifier = Modifier.size(24.dp),
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.primary,
+      )
+      Text(
+        stringResource(R.string.model_picker_import_model),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.primary,
+      )
     }
   }
 
