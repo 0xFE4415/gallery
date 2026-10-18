@@ -182,6 +182,13 @@ data class ModelManagerUiState(
   val staleAllowlistLastSyncTimeMs: Long = -1L,
 
   /**
+   * Epoch ms of the last successful model allowlist sync, shown as "Last synced" in the settings
+   * dialog's model list section. <= 0 when the list has never been synced, i.e. the copy bundled
+   * in the APK is showing. Refreshed by [processAllowlist] after every load or sync.
+   */
+  val allowlistLastSyncTimeMs: Long = -1L,
+
+  /**
    * Whether to show a warning that the model allowlist was loaded from the local test file at
    * [MODEL_ALLOWLIST_TEST_FILE_PATH] instead of the regular source.
    */
@@ -349,6 +356,13 @@ constructor(
   private var _allowlistModels: MutableList<Model> = mutableListOf()
   val allowlistModels: List<Model>
     get() = _allowlistModels
+
+  /**
+   * Short, human-readable label of where the model list syncs from, e.g.
+   * "google-ai-edge/gallery@main". Derived from [ALLOWLIST_BASE_URL] so the disclosure shown in
+   * the settings dialog can't drift from the URL [syncModelAllowlistNow] actually fetches.
+   */
+  val allowlistSourceLabel: String = deriveAllowlistSourceLabel(ALLOWLIST_BASE_URL)
 
   protected val _supplementaryModels: MutableList<Model> = CopyOnWriteArrayList()
 
@@ -1748,6 +1762,9 @@ constructor(
               tasks = curTasks,
               tasksByCategory = groupTasksByCategory(),
               showLocalTestAllowlistDialog = loadedFromTestAllowlist,
+              // Published here so the settings dialog shows a fresh "Last synced" right after a
+              // manual sync succeeds (and the right value after startup loads).
+              allowlistLastSyncTimeMs = readAllowlistLastSyncTimeFromDisk(),
             )
         }
 
@@ -1812,6 +1829,10 @@ constructor(
           tasks = curTasks,
           loadingModelAllowlistError = "",
           tasksByCategory = groupTasksByCategory(),
+          // Keep the last-synced disclosure in the settings dialog stable: createUiState() builds
+          // a fresh state whose allowlistLastSyncTimeMs defaults to -1 ("Never synced"), and
+          // dismissing the error doesn't change when the list actually synced.
+          allowlistLastSyncTimeMs = it.allowlistLastSyncTimeMs,
         )
     }
   }
@@ -2313,6 +2334,34 @@ constructor(
 
 private fun getAllowlistUrl(version: String): String {
   return "$ALLOWLIST_BASE_URL/${version}.json"
+}
+
+/**
+ * Derives a short, human-readable source label from [ALLOWLIST_BASE_URL], e.g.
+ * "https://raw.githubusercontent.com/google-ai-edge/gallery/refs/heads/main/model_allowlists"
+ * becomes "google-ai-edge/gallery@main". Falls back to the raw URL if its shape ever changes, so
+ * the settings dialog never shows an empty or misleading source.
+ */
+private fun deriveAllowlistSourceLabel(baseUrl: String): String {
+  return try {
+    val segments = URL(baseUrl).path.trim('/').split('/')
+    val owner = segments.getOrNull(0)
+    val repo = segments.getOrNull(1)
+    val branch =
+      if (segments.getOrNull(2) == "refs" && segments.getOrNull(3) == "heads") {
+        segments.getOrNull(4)
+      } else {
+        null
+      }
+    if (owner.isNullOrEmpty() || repo.isNullOrEmpty() || branch.isNullOrEmpty()) {
+      baseUrl
+    } else {
+      "$owner/$repo@$branch"
+    }
+  } catch (e: Exception) {
+    Log.w(TAG, "Failed to derive allowlist source label from $baseUrl", e)
+    baseUrl
+  }
 }
 
 /**

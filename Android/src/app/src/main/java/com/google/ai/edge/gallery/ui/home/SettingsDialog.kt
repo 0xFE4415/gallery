@@ -104,6 +104,7 @@ fun SettingsDialog(
 ) {
   var selectedTheme by remember { mutableStateOf(curThemeOverride) }
   var hfToken by remember { mutableStateOf(modelManagerViewModel.getTokenStatusAndData().data) }
+  val modelManagerUiState by modelManagerViewModel.uiState.collectAsState()
   val dateFormatter = remember {
     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
       .withZone(ZoneId.systemDefault())
@@ -241,6 +242,37 @@ fun SettingsDialog(
               style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            // Provenance: what this list is, where it syncs from and when it last synced, so the
+            // user can judge how much to trust it. Transparency only — nothing here enforces the
+            // list's content.
+            Text(
+              stringResource(R.string.settings_dialog_model_list_what),
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+              stringResource(
+                R.string.settings_dialog_model_list_source,
+                modelManagerViewModel.allowlistSourceLabel,
+              ),
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            // Updates by itself when a manual sync succeeds: the view model re-reads the sync
+            // time from disk and republishes it in the UI state after the synced list loads.
+            val lastSyncTimeMs = modelManagerUiState.allowlistLastSyncTimeMs
+            Text(
+              if (lastSyncTimeMs > 0) {
+                stringResource(
+                  R.string.settings_dialog_model_list_last_synced,
+                  dateFormatter.format(Instant.ofEpochMilli(lastSyncTimeMs)),
+                )
+              } else {
+                stringResource(R.string.settings_dialog_model_list_never_synced)
+              },
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             OutlinedButton(
               onClick = {
                 // Close the dialog so the sync progress, its skip button and the error/stale-list
@@ -258,7 +290,6 @@ fun SettingsDialog(
           // owns the server, and the enabled state is persisted so the server comes back with
           // the app.
           val edgeServerState by EdgeServerManager.state.collectAsState()
-          val modelManagerUiState by modelManagerViewModel.uiState.collectAsState()
           val servedModel = modelManagerViewModel.findActiveLlmModel()
           val servedModelName = servedModel?.let { it.displayName.ifEmpty { it.name } }
           Column(
